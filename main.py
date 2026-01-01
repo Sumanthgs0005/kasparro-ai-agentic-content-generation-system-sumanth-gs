@@ -1,91 +1,84 @@
 #!/usr/bin/env python3
 """
-Kasparro Applied AI Challenge - PERFECTLY WORKING 6-Agent System
+Kasparro Applied AI Challenge - Refactored Multi-Agent System
+
+This main.py demonstrates the orchestrated multi-agent architecture:
+- DataParserAgent: Normalizes raw product data
+- QuestionGeneratorAgent: Generates 16 FAQ questions
+- ContentBlockAgent: Creates reusable content blocks
+- TemplateEngineAgent: Maps blocks to page templates
+- PageAssemblerAgent: Assembles final JSON pages
+- Orchestrator: Coordinates all agents via DAG workflow
 """
 
 import json
 import os
+from pathlib import Path
+from agents.orchestrator import Orchestrator
 
+# Sample product data
 PRODUCT_DATA = {
     "name": "GlowBoost Vitamin C Serum",
     "concentration": "10% Vitamin C",
     "skin_type": ["Oily", "Combination"],
     "ingredients": ["Vitamin C", "Hyaluronic Acid"],
     "benefits": ["Brightening", "Fades dark spots"],
-    "usage": "Apply 2–3 drops in the morning before sunscreen",
+    "usage": "Apply 2-3 drops in the morning before sunscreen",
     "side_effects": "Mild tingling for sensitive skin",
-    "price": "₹699"
+    "price": "$699",
+    "competitor_products": {"Competitor A": "Similar formula", "Competitor B": "Higher price"},
 }
 
-class DataParserAgent:
-    def execute(self):
-        print(f"✅ [1/6] DataParser: {PRODUCT_DATA['name']}")
-        return PRODUCT_DATA
 
-class QuestionGeneratorAgent:
-    def execute(self, product):
-        questions = [{"question": f"What is {product['name']}?", "category": "Info"}] * 16
-        print(f"✅ [2/6] QuestionGen: {len(questions)} questions")
-        return questions
+def main():
+    """
+    Execute the multi-agent orchestration workflow.
+    
+    The Orchestrator manages the entire workflow:
+    1. Parse raw product data (DataParserAgent)
+    2. Generate FAQ questions (QuestionGeneratorAgent)
+    3. Create content blocks (ContentBlockAgent)
+    4. Apply page templates (TemplateEngineAgent)
+    5. Assemble final pages (PageAssemblerAgent)
+    """
+    print("\n" + "="*60)
+    print("🤖 KASPARRO MULTI-AGENT ORCHESTRATION SYSTEM")
+    print("="*60)
 
-class ContentBlockAgent:
-    def execute(self, product):
-        content = {
-            "name": product['name'],  # FIXED!
-            "overview": f"{product['name']} - {product['concentration']}",
-            "benefits": f"Delivers {', '.join(product['benefits'])}",
-            "usage": product['usage'],
-            "price": product['price']
-        }
-        print("✅ [3/6] ContentBlock: Generated")
-        return content
+    # Initialize the Orchestrator (which manages all agents)
+    orchestrator = Orchestrator()
+    print("\n✓ Orchestrator initialized with 5 autonomous agents")
+    print("  - DataParserAgent")
+    print("  - QuestionGeneratorAgent")
+    print("  - ContentBlockAgent")
+    print("  - TemplateEngineAgent")
+    print("  - PageAssemblerAgent")
 
-class TemplateEngineAgent:
-    def execute(self, content):
-        print("✅ [4/6] TemplateEngine: Applied")
-        return {"status": "templates_applied"}
+    # Execute the DAG workflow
+    print("\n" + "-"*60)
+    print("Executing multi-agent workflow via Directed Acyclic Graph...")
+    print("-"*60)
+    
+    pages = orchestrator.run(PRODUCT_DATA)
+    
+    print("\n✓ Workflow completed successfully!")
 
-class PageAssemblerAgent:
-    def execute(self, content, questions):
-        pages = {
-            "faq.json": {
-                "title": "FAQ Page",
-                "questions": questions[:5]
-            },
-            "product_page.json": {
-                "title": "Product Page", 
-                "content": content
-            },
-            "comparison_page.json": {
-                "title": "Comparison Page",
-                "product_a": content['name'],
-                "product_b": "PureGlow Serum", 
-                "price_a": content['price'],
-                "price_b": "₹899"
-            }
-        }
-        print("✅ [5/6] PageAssembler: 3 JSON pages")
-        return pages
+    # Save output files
+    output_dir = Path("outputs")
+    output_dir.mkdir(exist_ok=True)
 
-class OrchestratorAgent:
-    def run_pipeline(self):
-        print("\n🎯 KASPARRO 6-AGENT SYSTEM")
-        print("=" * 50)
-        
-        product = DataParserAgent().execute()
-        questions = QuestionGeneratorAgent().execute(product)
-        content = ContentBlockAgent().execute(product)
-        TemplateEngineAgent().execute(content)
-        pages = PageAssemblerAgent().execute(content, questions)
-        
-        os.makedirs("outputs", exist_ok=True)
-        for filename, data in pages.items():
-            with open(f"outputs/{filename}", "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            print(f"💾 outputs/{filename}")
-        
-        print("\n✅ [6/6] Orchestrator COMPLETE!")
-        return pages
+    print("\nSaving generated pages:")
+    for filename, page_data in pages.items():
+        filepath = output_dir / filename
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(page_data, f, indent=2, ensure_ascii=False)
+        print(f"  ✓ {filepath}")
+
+    print("\n" + "="*60)
+    print("✓ Multi-agent system execution complete!")
+    print("="*60)
+    print()
+
 
 if __name__ == "__main__":
-    OrchestratorAgent().run_pipeline()
+    main()
